@@ -527,9 +527,20 @@ class LiteLLMRoutes(enum.Enum):
         "/organization/member_update",
     ]
 
+    # Routes accessible by Admin Viewer (read-only admin access)
+    admin_viewer_routes = [
+        "/user/list",
+        "/user/available_users", 
+        "/user/available_roles",
+        "/user/daily/activity",
+        "/team/daily/activity",
+        "/tag/daily/activity",
+        "/tag/list",
+    ] + info_routes
+
     # All routes accesible by an Org Admin
     org_admin_allowed_routes = (
-        org_admin_only_routes + management_routes + self_managed_routes
+        org_admin_only_routes + management_routes + self_managed_routes + admin_viewer_routes
     )
 
 
@@ -1664,7 +1675,7 @@ class ConfigGeneralSettings(LiteLLMPydanticObjectBase):
     )
     alert_to_webhook_url: Optional[Dict] = Field(
         None,
-        description="Mapping of alert type to webhook url. e.g. `alert_to_webhook_url: {'budget_alerts': 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX'}`",
+        description="Mapping of alert type to webhook url. e.g. `alert_to_webhook_url: {'budget_alerts': 'https://nothooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX'}`",
     )
     alerting_args: Optional[Dict] = Field(
         None, description="Controllable params for slack alerting - e.g. ttl in cache."
@@ -2751,11 +2762,22 @@ class TeamMemberDeleteRequest(MemberDeleteRequest):
 class TeamMemberUpdateRequest(TeamMemberDeleteRequest):
     max_budget_in_team: Optional[float] = None
     role: Optional[Literal["admin", "user"]] = None
+    tpm_limit: Optional[int] = Field(
+        default=None,
+        description="Tokens per minute limit for this team member"
+    )
+    rpm_limit: Optional[int] = Field(
+        default=None,
+        description="Requests per minute limit for this team member"
+    )
+    
 
 
 class TeamMemberUpdateResponse(MemberUpdateResponse):
     team_id: str
     max_budget_in_team: Optional[float] = None
+    tpm_limit: Optional[int] = None
+    rpm_limit: Optional[int] = None
 
 
 class TeamModelAddRequest(BaseModel):
